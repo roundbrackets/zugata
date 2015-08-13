@@ -16,7 +16,7 @@ try {
         $token = json_decode($access_token, true);
         file_put_contents("./tokens/".$token["access_token"], $access_token);
         header('Location: ' . $_SERVER['SCRIPT_NAME']."?tkn={$token["access_token"]}" );
-        xit;
+        exit;
     } else if (isset($_GET['tkn'])) {
         $body = [
             'token' => $_GET['tkn'],

@@ -38,16 +38,16 @@ function getClientForToken ($access_token, $fake_it = false) {
         $client = null;
     } else {
         $client->setAccessToken($accessToken);
-    }
 
-    // Refresh the token if it's expired.
-    if ($client->isAccessTokenExpired()) {
-        $refreshToken = $client->getRefreshToken();
-        if (!empty($refreshToken)) {
-            $client->refreshToken($refreshToken);
-            //We'd want to return this.
-            $accessToken = $client->getAccessToken();
-            file_put_contents(PATH.'/tokens/'.$access_token);
+        // Refresh the token if it's expired.
+        if ($client->isAccessTokenExpired()) {
+            $refreshToken = $client->getRefreshToken();
+            if (!empty($refreshToken)) {
+                $client->refreshToken($refreshToken);
+                //We'd want to return this.
+                $accessToken = $client->getAccessToken();
+                file_put_contents(PATH.'/tokens/'.$access_token);
+            }
         }
     }
 
@@ -136,7 +136,7 @@ function doTheThing ($postdata) {
         // the emails we have already found. When there is no PageToken, we're 
         // done. It doesn't seem like there are a lot of different senderd
         // so I am setting the max reults lower.
-        
+
         $emails = '';
 
         while (true) {
