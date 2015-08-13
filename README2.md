@@ -15,19 +15,34 @@ Well, if you want to, a, it's not encrypted and b, I can read your emails.
 
 You can get a request id by:
 
-curl http://zugata.gunn.so:81/v1/emails/ -d "{ \"token\": \"TOKEN\" }" 
+    curl http://zugata.gunn.so:81/v1/emails/ -d "{ \"token\": \"TOKEN\" }" 
+
+or 
+
+    ./bin/requestid.sh TOKEN
 
 Returns:
 
-{"requestId":"user@email.com"}
+    {"requestId":"user@email.com"}
 
 Then get the emails:
 
-curl http://zugata.gunn.so:81/v1/emails/{user@email.com}
+    curl http://zugata.gunn.so:81/v1/emails/{user@email.com}
+
+or 
+
+    ./bin/emails.sh user@email.com
+
+If you're curious you can: 
+
+    curl http://zugata.gunn.so:81/v1/emails/{queen@roundbrackets.com}
+
+I'm sure there is nothing embarrassing in there.
 
 Returns:
 
 {"total":208,"values": 
     ["support@github.com","noreply@github.com","icare7@amcustomercare.att-mail.com"]}
 
-If you're curious     
+
+

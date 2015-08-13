@@ -75,8 +75,8 @@ function getRequestId (Google_Service_Gmail $gmail) {
 
 function doTheThing ($postdata) {
     $err        = 
-        $requestId  = 
-        $code       = false;
+    $requestId  = 
+    $code       = false;
 
     try {
         $token = getToken($postdata);
@@ -119,6 +119,7 @@ function doTheThing ($postdata) {
                 if (!isset($arr[$email])) {
                     $arr[$email] = 0;
                 }
+                // This is how you find out whom to filter to /dev/null
                 $arr[$email]++;
                 error_log($email.' '.$arr[$email]);
             }
@@ -150,13 +151,15 @@ function doTheThing ($postdata) {
                 $h = $x->getPayload()->getHeaders();
                 $email = $h[0]->getValue();
                 $email = strtolower(trim(preg_replace("/^.*</", "", $email), '>'));
-                //$arr[$email] = true;
+                $arr[$email] = true;
 
+                /*
                 if (!isset($arr[$email])) {
                     $arr[$email] = 0;
                 }
                 $arr[$email]++;
-                error_log($email.' '.$arr[$email]);
+                rror_log($email.' '.$arr[$email]);
+                 */
             }
 
             $emails = " -from:".implode(" -from:", array_keys($arr));
@@ -199,3 +202,21 @@ function doTheOtherThing ($requestId) {
     }
     return false;
 }
+
+/*
+ * From stackoverflow, in case one wanted to run the message munshing and not 
+ * leave the requestor hanging (hilarious).
+ *
+exec(sprintf("%s > %s 2>&1 & echo $! >> %s", $cmd, $outputfile, $pidfile));
+
+function isRunning($pid){
+    try{
+        $result = shell_exec(sprintf("ps %d", $pid));
+        if( count(preg_split("/\n/", $result)) > 2){
+            return true;
+        }
+    }catch(Exception $e){}
+
+        return false;
+}
+ */

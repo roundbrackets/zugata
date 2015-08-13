@@ -1,6 +1,8 @@
 <?
 require_once dirname(__FILE__)."/inc.php";
 
+// I could use sessions and stuff.
+
 $client = getClient();
 
 $body = [
@@ -44,17 +46,3 @@ header("Content-Type: application/json; charset=UTF-8");
 header("Content-Length: ".strlen($body));
 echo "$body";
 
-/*
-exec(sprintf("%s > %s 2>&1 & echo $! >> %s", $cmd, $outputfile, $pidfile));
-
-function isRunning($pid){
-    try{
-        $result = shell_exec(sprintf("ps %d", $pid));
-        if( count(preg_split("/\n/", $result)) > 2){
-            return true;
-        }
-    }catch(Exception $e){}
-
-        return false;
-}
- */
