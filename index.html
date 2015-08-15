@@ -1,0 +1,27 @@
+<html>
+    <head>
+        <title>
+            IZI
+        </title>
+    </head>
+<body>
+    <div>
+        Get token.<br />
+        <a target="_blank" href="/oauth.php">Log in</a>
+    </div>
+
+    <div>
+         Get request id.
+        <pre>
+            curl http://zugata.gunn.so:81/v1/emails -d "{\"token\":\"TOKEN\"}"
+        </pre>
+    </div>
+
+    <div>
+        Get Result.
+        <pre>
+            curl http://zugata.gunn.so:81/v1/emails/{REQUESTID}
+        </pre>
+    </div>
+</body>
+</html>
