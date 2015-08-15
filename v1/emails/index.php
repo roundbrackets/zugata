@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $postdata = file_get_contents("php://input"); 
     $token = getToken ($postdata);
-    list($requestId, $err, $code) = doTheThing($postdata);
+    list($requestId, $err, $code) = getUniqueSender($postdata);
 
     if (!empty($err)) {
         $body = json_encode([
@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 } else {
     $requestId = extractRequestId ($_SERVER["REQUEST_URI"]);
-    $body = doTheOtherThing($requestId);
+    $body = ShowAllTheEmailsWeFound ($requestId);
     $code = 200;
 
     if (empty($body)) {
