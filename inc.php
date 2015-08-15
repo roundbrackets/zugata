@@ -1,5 +1,5 @@
 <?
-define('PATH', '/opt/Projects/zugata');
+define('PATH', dirname(__FILE__));
 define('CREDS', PATH.'/secret.json');
 set_include_path(get_include_path() . PATH_SEPARATOR . PATH.'/google-api-php-client/src');
 require 'Google/autoload.php';
