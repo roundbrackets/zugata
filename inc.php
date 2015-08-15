@@ -49,6 +49,9 @@ function getClientForToken ($access_token, $fake_it = false) {
         $accessToken = file_get_contents($token_file);
     }
 
+    var_dump($accessToken);
+    exit;
+
     if (empty($accessToken)) {
         $client = null;
     } else {

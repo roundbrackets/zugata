@@ -16,7 +16,7 @@ try {
         $client->authenticate($code);
         $access_token = $client->getAccessToken();
         $token = json_decode($access_token, true);
-        file_put_contents("./tokens/".$token["access_token"], $access_token);
+        file_put_contents(tokenFile($token["access_token"]), $access_token);
         header('Location: ' . $_SERVER['SCRIPT_NAME']."?tkn={$token["access_token"]}" );
         exit;
     } else if (isset($_GET['tkn'])) {

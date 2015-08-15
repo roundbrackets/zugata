@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $postdata = file_get_contents("php://input"); 
     $token = getToken ($postdata);
-    list($requestId, $err, $code) = getUniqueSender($postdata);
+    list($requestId, $err, $code) = getUniqueSender($postdata, true);
 
     if (!empty($err)) {
         $body = json_encode([
