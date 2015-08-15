@@ -6,25 +6,22 @@
     </head>
 <body>
     <div>
-    <a target="_blank" href="/oauth.php">Log in</a>
+        Get token.<br />
+        <a target="_blank" href="/oauth.php">Log in</a>
     </div>
 
     <div>
-    Paste your token here:
-    <form method="POST" action="/v1/emails/">
-        <textarea>
-        </textarea><br />
-        <input type="submit" value="Token">
-    </form>
+         Get request id.
+        <pre>
+            curl http://zugata.gunn.so:81/v1/emails -d "{\"token\":\"TOKEN\"}"
+        </pre>
     </div>
 
     <div>
-    Paste your request id here:
-    <form method="GET" action="/v1/emails/">
-        <textarea>
-        </textarea><br />
-        <input type="submit" value="Request Id">
-    </form>
+        Get Result.
+        <pre>
+            curl http://zugata.gunn.so:81/v1/emails/{REQUESTID}
+        </pre>
     </div>
 </body>
 </html>
