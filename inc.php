@@ -3,6 +3,21 @@ define('PATH', dirname(__FILE__));
 define('CREDS', PATH.'/secret.json');
 set_include_path(get_include_path() . PATH_SEPARATOR . PATH.'/google-api-php-client/src');
 require 'Google/autoload.php';
+define("TOKENS", '/var/tmp/TOKENS');
+define("REQUESTS", '/var/tmp/REQUESTS');
+
+if (!file_exists(TOKENS)) {
+    mkdir(TOKENS); 
+    mkdir(REQUESTS); 
+}
+
+function tokenFile($tkn) {
+    return sprintf('%s/%s', TOKENS, $tkn);
+}
+
+function requestFile($req) {
+    return sprintf('%s/%s', REQUESTS, $req);
+}
 
 function getClient() {
     $client = new Google_Client();
@@ -25,13 +40,13 @@ function getClientForToken ($access_token, $fake_it = false) {
         "id_token":"",
         "created":%s}'; 
 
-    $token_file = PATH.'/tokens/'.$access_token;
+    $token_file = tokenFile($access_token);
     if (!file_exists($token_file)) {
         if ($fake_it) {
             $accessToken = sprintf($tmpl, $access_token, time());
         }
     } else {
-        $accessToken = file_get_contents(PATH.'/tokens/'.$access_token);
+        $accessToken = file_get_contents($token_file);
     }
 
     if (empty($accessToken)) {
@@ -46,7 +61,7 @@ function getClientForToken ($access_token, $fake_it = false) {
                 $client->refreshToken($refreshToken);
                 //We'd want to return this.
                 $accessToken = $client->getAccessToken();
-                file_put_contents(PATH.'/tokens/'.$access_token);
+                file_put_contents(tokenFile($access_token));
             }
         }
     }
@@ -73,7 +88,7 @@ function getRequestId (Google_Service_Gmail $gmail) {
     return $profile->getEmailAddress();
 }
 
-function doTheThing ($postdata) {
+function getUniqueSenders($postdata) {
     $err        = 
     $requestId  = 
     $code       = false;
@@ -81,57 +96,12 @@ function doTheThing ($postdata) {
     try {
         $token = getToken($postdata);
 
-        $client = getClientForToken($token);
+        $client = getClientForToken($token, true);
         if (is_null($client)) {
             $code = 404;
             throw new Exception("Token not found.");
         }
 
-        $gmailService = new Google_Service_Gmail($client);
-        $resp = $gmailService->users_messages->listUsersMessages("me", array(
-            "q" => "newer_than:1m -is:draft -in:sent -is:chat",
-            "includeSpamTrash" => false, 'maxResults' => 1000 
-        ));
-
-        $requestId = getRequestId($gmailService);
-
-        $arr = [];
-
-        $q = "newer_than:2m -is:draft -in:sent -is:chat";
-
-        /*
-        // Get a list of messages that are not chat not in sent (so preferably 
-        // not from ourself), and not draft. includeSpamTrash = false should 
-        // eliminate deleted and spam messages.
-        $resp = $gmailService->users_messages->listUsersMessages("me", array(
-            "q" => $q,
-            "includeSpamTrash" => false, 'maxResults' => 1000 
-        ));
-
-        // This will loop through every single message.
-        while(!empty($resp->getNextPageToken())) {
-
-            foreach ( $resp->getMessages() as $m ) {
-                $x = $gmailService->users_messages->get("me", $m->getId(), array( "format" => "metadata", "metadataHeaders" => "from" ));
-                $h = $x->getPayload()->getHeaders();
-                $email = $h[0]->getValue();
-                $email = strtolower(trim(preg_replace("/^.*</", "", $email), '>'));
-                if (!isset($arr[$email])) {
-                    $arr[$email] = 0;
-                }
-                // This is how you find out whom to filter to /dev/null
-                $arr[$email]++;
-                error_log($email.' '.$arr[$email]);
-            }
-
-            $obj = [
-                "total" => count($arr),
-                "values" => array_keys($arr)
-            ];
-
-            file_put_contents(PATH.'/requests/'.$requestId, json_encode($obj, true));
-        }
-         */
 
         // For every time through, we send a new query to gmail which excludes 
         // the emails we have already found. When there is no PageToken, we're 
@@ -139,6 +109,9 @@ function doTheThing ($postdata) {
         // so I am setting the max reults lower.
 
         $emails = '';
+        $requestId = getRequestId($gmailService);
+        $arr = [];
+        $q = "newer_than:2m -is:draft -in:sent -is:chat";
 
         while (true) {
             $resp = $gmailService->users_messages->listUsersMessages("me", array(
@@ -147,19 +120,12 @@ function doTheThing ($postdata) {
             ));
 
             foreach ( $resp->getMessages() as $m ) {
-                $x = $gmailService->users_messages->get("me", $m->getId(), array( "format" => "metadata", "metadataHeaders" => "from" ));
+                $x = $gmailService->users_messages->get("me", $m->getId(), 
+                    array( "format" => "metadata", "metadataHeaders" => "from" ));
                 $h = $x->getPayload()->getHeaders();
                 $email = $h[0]->getValue();
                 $email = strtolower(trim(preg_replace("/^.*</", "", $email), '>'));
                 $arr[$email] = true;
-
-                /*
-                if (!isset($arr[$email])) {
-                    $arr[$email] = 0;
-                }
-                $arr[$email]++;
-                rror_log($email.' '.$arr[$email]);
-                 */
             }
 
             $emails = " -from:".implode(" -from:", array_keys($arr));
@@ -169,34 +135,38 @@ function doTheThing ($postdata) {
             }
         }
 
-
         $obj = [
             "total" => count($arr),
             "values" => array_keys($arr)
         ];
 
-        file_put_contents(PATH.'/requests/'.$requestId, json_encode($obj, true));
+        // We got something and we saved it.
+        file_put_contents(requestFile($requestId), json_encode($obj, true));
         $code = 201;
     } catch (Google_Auth_Exception $e) {
+        // Google doesn't like the token.
         $err = $e->getMessage();
         $code = 401;
     } catch (Exception $e) {
+        // Something else happened.
         $err = $e->getMessage();
         if (empty($code)) {
-            $code = 418;
+            $code = 418; // Apache doesn't like teapots.
         }
     }
     return [ $requestId, $err, $code ];
 }
 
+// Extract the bit of the url after the /
 function extractRequestId ($uri) {
     $parts = explode("/", $uri);
     $requestId = urldecode(array_pop($parts));
     return trim($requestId, "{}");
 }
 
-function doTheOtherThing ($requestId) {
-    $data = PATH.'/requests/'.$requestId;
+
+function ShowAllTheEmailsWeFound ($requestId) {
+    $data = requestFile($requestId);
     if (file_exists($data)) {
         return file_get_contents($data);
     }
