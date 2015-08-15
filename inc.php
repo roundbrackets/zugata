@@ -99,40 +99,6 @@ function doTheThing ($postdata) {
 
         $q = "newer_than:2m -is:draft -in:sent -is:chat";
 
-        /*
-        // Get a list of messages that are not chat not in sent (so preferably 
-        // not from ourself), and not draft. includeSpamTrash = false should 
-        // eliminate deleted and spam messages.
-        $resp = $gmailService->users_messages->listUsersMessages("me", array(
-            "q" => $q,
-            "includeSpamTrash" => false, 'maxResults' => 1000 
-        ));
-
-        // This will loop through every single message.
-        while(!empty($resp->getNextPageToken())) {
-
-            foreach ( $resp->getMessages() as $m ) {
-                $x = $gmailService->users_messages->get("me", $m->getId(), array( "format" => "metadata", "metadataHeaders" => "from" ));
-                $h = $x->getPayload()->getHeaders();
-                $email = $h[0]->getValue();
-                $email = strtolower(trim(preg_replace("/^.*</", "", $email), '>'));
-                if (!isset($arr[$email])) {
-                    $arr[$email] = 0;
-                }
-                // This is how you find out whom to filter to /dev/null
-                $arr[$email]++;
-                error_log($email.' '.$arr[$email]);
-            }
-
-            $obj = [
-                "total" => count($arr),
-                "values" => array_keys($arr)
-            ];
-
-            file_put_contents(PATH.'/requests/'.$requestId, json_encode($obj, true));
-        }
-         */
-
         // For every time through, we send a new query to gmail which excludes 
         // the emails we have already found. When there is no PageToken, we're 
         // done. It doesn't seem like there are a lot of different senderd
@@ -152,14 +118,6 @@ function doTheThing ($postdata) {
                 $email = $h[0]->getValue();
                 $email = strtolower(trim(preg_replace("/^.*</", "", $email), '>'));
                 $arr[$email] = true;
-
-                /*
-                if (!isset($arr[$email])) {
-                    $arr[$email] = 0;
-                }
-                $arr[$email]++;
-                rror_log($email.' '.$arr[$email]);
-                 */
             }
 
             $emails = " -from:".implode(" -from:", array_keys($arr));
@@ -202,21 +160,3 @@ function doTheOtherThing ($requestId) {
     }
     return false;
 }
-
-/*
- * From stackoverflow, in case one wanted to run the message munshing and not 
- * leave the requestor hanging (hilarious).
- *
-exec(sprintf("%s > %s 2>&1 & echo $! >> %s", $cmd, $outputfile, $pidfile));
-
-function isRunning($pid){
-    try{
-        $result = shell_exec(sprintf("ps %d", $pid));
-        if( count(preg_split("/\n/", $result)) > 2){
-            return true;
-        }
-    }catch(Exception $e){}
-
-        return false;
-}
- */
